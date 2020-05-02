@@ -32,9 +32,3 @@ func GetTeamDistance(client *strava.Client, team int64) float64 {
 	return totalDistance / 1605.0
 
 }
-
-func main() {
-
-	fmt.Println(GetTeamDistance(ConnectStravaApi(), 516715))
-
-}
