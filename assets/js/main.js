@@ -4,6 +4,42 @@
 * Author: BootstrapMade.com
 * License: https://bootstrapmade.com/license/
 */
+
+
+
+// New Vue instance
+var App = new Vue({
+// Vue instance options here
+el: '#app', //
+data : {
+    testValue: "hello world",
+    username : null,
+    first_name : null,
+    last_name : null,
+    email : null,
+    password : null,
+    confirm_password: null,
+    teams : []
+},
+methods : {
+  login : function(){
+    console.log("Tried to Log in")
+  }
+mounted : {
+  axios.get('localhost:8000/events&Content-Type=application/json')
+  .then(response => {
+        this.teams = response.data})
+  .catch(error => {
+        console.log(error)
+      })
+}
+}
+
+
+})
+Vue.config.devtools = true;
+
+
 !(function($) {
   "use strict";
 

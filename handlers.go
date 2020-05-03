@@ -15,8 +15,8 @@ import (
 func (a *App) TeamHandlerList(w http.ResponseWriter, r *http.Request) {
 	var teams []Team
 	a.DB.Preload("Runners").Find(&teams)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(&teams)
-
 }
 
 // TeamHandlerDetail provides a list view of Teams
@@ -26,6 +26,7 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == "GET":
 		a.DB.Preload("Runners", "status = 'Active'").First(&team, vars["id"])
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(&team)
 		return
 	case r.Method == "PUT":
@@ -35,6 +36,7 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 		ownerID, _ := strconv.ParseUint(r.FormValue("owner_id"), 10, 64)
 		team.UserID = uint(ownerID)
 		a.DB.Save(&team)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(&team)
 		return
 	case r.Method == "POST":
@@ -44,6 +46,8 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 		team.UserID = uint(ownerID)
 		a.DB.Create(&team)
 		a.DB.Create(&Affiliation{TeamID: team.ID, UserID: team.UserID, Status: "Active"})
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(&team)
 		return
 	case r.Method == "DELETE":
@@ -79,6 +83,8 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		user.FirstName = firstname
 		user.LastName = lastname
 		a.DB.Create(&user)
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode("Success")
 		return
 	}
