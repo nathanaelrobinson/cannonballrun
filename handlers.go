@@ -60,7 +60,6 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Fatal Error")
 	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Category: %v\n", vars["id"])
 
 }
 

@@ -46,9 +46,15 @@ func main() {
 
 	r.HandleFunc("/", index)
 
-	logger := handlers.CombinedLoggingHandler(os.Stdout, r)
+	// Logging for web server
+	f, _ := os.Create("/var/log/golang/golang-server.log")
+	defer f.Close()
+	logger := handlers.CombinedLoggingHandler(f, r)
+
+	// Logging for dev
+	// logger := handlers.CombinedLoggingHandler(os.Stdout, r)
 	srv := &http.Server{
-		Addr: "0.0.0.0:8000",
+		Addr: "0.0.0.0:5000",
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
