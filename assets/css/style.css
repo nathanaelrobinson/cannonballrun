@@ -165,8 +165,30 @@ h1, h2, h3, h4, h5, h6, .font-primary {
   margin-top: -80px;
   z-index: 9;
 }
+#Homehero {
+  width: 100%;
+  height: 80vh;
+  background: url("../img/home-splash.jpg") center center;
+  background-size: cover;
+  position: relative;
+  margin-top: -80px;
+  z-index: 9;
+}
 
 #hero .hero-container {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 0 15px;
+}
+#Homehero .hero-container {
   position: absolute;
   bottom: 0;
   top: 0;
@@ -188,6 +210,14 @@ h1, h2, h3, h4, h5, h6, .font-primary {
   line-height: 56px;
   color: #222;
 }
+#Homehero h1 {
+  margin: 0 0 10px 0;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 56px;
+  line-height: 56px;
+  color: #222;
+}
 
 #hero h2 {
   color: #333;
@@ -195,6 +225,11 @@ h1, h2, h3, h4, h5, h6, .font-primary {
   font-size: 24px;
 }
 
+#Homehero h2 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
 @-webkit-keyframes animate-loading-notify {
   0% {
     transform: rotate(0deg);
@@ -213,16 +248,6 @@ h1, h2, h3, h4, h5, h6, .font-primary {
   }
 }
 
-#hero .php-email-form input {
-  border-radius: 50px;
-  box-shadow: none;
-  font-size: 14px;
-  border: 0;
-  padding: 0px 15px 2px 20px;
-  width: 250px;
-  height: 40px;
-  margin: 0 8px;
-}
 
 #hero button {
   font-family: "Raleway", sans-serif;

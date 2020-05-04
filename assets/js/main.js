@@ -18,21 +18,80 @@ data : {
     last_name : null,
     email : null,
     password : null,
-    confirm_password: null,
+    new_password : null,
+    confirm_new_password: null,
+    loginResponse: null,
+    registerResponse: null,
     teams : []
 },
 methods : {
+  registerUser : function(){
+    if (this.new_password != this.confirm_new_password){
+        this.registerResponse = "Passwords Do Not Match"
+        return
+    };
+    if ((this.first_name == null) || (this.last_name == null) || (this.email == null) || (this.new_username == null) || (this.new_password == null)){
+          this.registerResponse = "All Fields Required"
+          return
+    };
+    var postForm = new FormData();
+    postForm.set("username", this.new_username)
+    postForm.set("password", this.new_password)
+    postForm.set("first_name", this.first_name)
+    postForm.set("last_name", this.last_name)
+    postForm.set("email", this.email)
+    axios({
+    method: 'post',
+    url: '/register',
+    data: postForm,
+    headers: {'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+      if (response.data['status'] != 200) {
+        this.registerResponse = response.data['message']
+        return
+      }
+      token = response.data["token"];
+      console.log(token)
+      localStorage.setItem('user_token', token)
+      window.location.replace("/home");
+    })
+    .catch(error => {});
+  },
+
+  loginFast : function() {
+    if (localStorage.user_token != null){
+      window.location.replace("/home");
+    }
+  },
+
   login : function(){
-    console.log("Tried to Log in")
-  }
-mounted : {
-  axios.get('localhost:8000/events&Content-Type=application/json')
-  .then(response => {
-        this.teams = response.data})
-  .catch(error => {
-        console.log(error)
-      })
-}
+    var postForm = new FormData();
+    postForm.set("username", this.username)
+    postForm.set("password", this.password)
+    axios({
+    method: 'post',
+    url: '/login',
+    data: postForm,
+    headers: {'Content-Type': 'multipart/form-data' }
+    })
+    .then(response => {
+      if (response.data['status'] != 200) {
+        this.loginResponse = response.data['message']
+        return
+      }
+      token = response.data["token"];
+      console.log(token)
+      localStorage.setItem('user_token', token)
+      window.location.replace("/home");
+    })
+    .catch(error => {});
+  },
+  // login : function(){
+  //   if (localStorage.getItem('user-token')) != null {
+  //
+  //   }
+  // },
 }
 
 

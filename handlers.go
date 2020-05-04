@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
 
@@ -83,13 +85,31 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		user.FirstName = firstname
 		user.LastName = lastname
 		a.DB.Create(&user)
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode("Success")
+
+		expiresAt := time.Now().Add(time.Minute * 100000).Unix()
+
+		tk := Token{
+			UserID:   user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			StandardClaims: &jwt.StandardClaims{
+				ExpiresAt: expiresAt,
+			},
+		}
+		token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+		tokenString, error := token.SignedString([]byte("secret"))
+		if error != nil {
+			fmt.Println(error)
+		}
+		var resp = map[string]interface{}{"status": 200, "message": "logged in"}
+		resp["token"] = tokenString //Store the token in the response
+		resp["user"] = user
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Record Found")
+	var resp = map[string]interface{}{"status": 403, "message": "Username or Email Already Exists"}
+	json.NewEncoder(w).Encode(resp)
 	// http.Redirect(w, r, "/", 301)
 
 }
@@ -103,8 +123,8 @@ func (a *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var user User
 
 	if a.DB.Where("username = ?", username).First(&user).RecordNotFound() {
-		json.NewEncoder(w).Encode("Account not Found")
-		// http.Redirect(w, r, "/login", 301)
+		var resp = map[string]interface{}{"status": 403, "message": "Invalid login credentials. Please try again"}
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
@@ -112,12 +132,29 @@ func (a *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// validate password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		json.NewEncoder(w).Encode("Password Doesn't Match")
-		// http.Redirect(w, r, "/login", 301)
+		var resp = map[string]interface{}{"status": 403, "message": "Invalid login credentials. Please try again"}
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
-	authenticated = true
-	json.NewEncoder(w).Encode("Login Successful")
-	// http.Redirect(w, r, "/list", 301)
+	expiresAt := time.Now().Add(time.Minute * 100000).Unix()
+
+	tk := Token{
+		UserID:   user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		StandardClaims: &jwt.StandardClaims{
+			ExpiresAt: expiresAt,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	tokenString, error := token.SignedString([]byte("secret"))
+	if error != nil {
+		fmt.Println(error)
+	}
+	var resp = map[string]interface{}{"status": 200, "message": "logged in"}
+	resp["token"] = tokenString //Store the token in the response
+	resp["user"] = user
+	json.NewEncoder(w).Encode(resp)
+	return
 
 }

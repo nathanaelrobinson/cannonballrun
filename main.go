@@ -14,18 +14,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		log.Println(r.RequestURI)
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
-	})
-}
-
 var (
-	err           error
-	authenticated = true
+	err error
 )
 
 func main() {
@@ -39,15 +29,21 @@ func main() {
 
 	// SET ROUTES HERE
 	r := mux.NewRouter()
+	r.Use(CommonMiddleware)
 	r.Use(loggingMiddleware)
-	r.HandleFunc("/teams/{id:[0-9]+}", a.TeamHandlerDetail).Methods("GET", "PUT", "POST", "DELETE")
-	r.HandleFunc("/teams", a.TeamHandlerList).Methods("GET")
 	r.HandleFunc("/register", a.RegisterHandler).Methods("POST")
 	r.HandleFunc("/login", a.LoginHandler).Methods("POST")
+	r.HandleFunc("/home", home)
+
+	api := r.PathPrefix("/api").Subrouter()
+	api.Use(JwtVerify)
+	api.HandleFunc("/teams/{id:[0-9]+}", a.TeamHandlerDetail).Methods("GET", "PUT", "POST", "DELETE")
+	api.HandleFunc("/teams", a.TeamHandlerList).Methods("GET")
 
 	// Define a subrouter to handle files at static for accessing static content
 	static := r.PathPrefix("/assets").Subrouter()
 	static.Handle("/{*}/{*}", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+
 	r.HandleFunc("/", index)
 
 	logger := handlers.CombinedLoggingHandler(os.Stdout, r)

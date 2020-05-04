@@ -1,6 +1,7 @@
 package main
 
 import (
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
@@ -44,6 +45,19 @@ type Affiliation struct {
 	TeamID uint   `json:"team_id"`
 	UserID uint   `json:"user_id"`
 	Status string `gorm:"size:12" json:"status"` // Options include Pending, Active, Removed
+}
+
+//Token struct declaration
+type Token struct {
+	UserID   uint
+	Username string
+	Email    string
+	*jwt.StandardClaims
+}
+
+// Exceptions send messages to frontend via json
+type Exception struct {
+	Message string `json:"message"`
 }
 
 // App is used to initialize a database and hold our handler functions

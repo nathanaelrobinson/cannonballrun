@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Siimple - Bootstrap Landing Page Template</title>
+  <title>Cannonball Run</title>
   <meta content="" name="descriptison">
   <meta content="" name="keywords">
 
@@ -26,23 +26,14 @@
   <!-- VUE JS -->
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+
 </head>
 
 <body>
   <!-- ======= Header ======= -->
   <header id="header">
     <div class="container-fluid">
-
-
-      <button type="button" class="nav-toggle"><i></i></button>
-      <nav class="nav-menu">
-        <ul>
-          <li class="active"><a href="#header">Home</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#why-us">Why Run</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav><!-- .nav-menu -->
 
     </div>
   </header><!-- End #header -->
@@ -53,8 +44,8 @@
       <h1>The Cannonball Run</h1>
       <h2>Sign Up With Your Friends to Race Other Runners Across the Country</h2>
 
-        <div class="text-center"><button >Login</button></div>
-        <div class="text-center"><button data-toggle="modal" data-target="#modalRegisterForm">Join</button></div>
+        <div class="text-center"><button data-toggle="modal" v-on:click="loginFast" data-target="#modalLoginForm">Login</button></div>
+        <div class="text-center"><button data-toggle="modal" data-target="#modalRegisterForm">Register</button></div>
     </div>
   </section><!-- #hero -->
 
@@ -71,7 +62,6 @@
           <div class="col-lg-6 pt-4 pt-lg-0">
             <h3>What is the Cannonball Run</h3>
 
-            <h1>{{ testValue }}</h1>
             <p class="font-italic">
               The Cannonball Run is a Virtual Relay Race From New York City to Los Angeles.
             </p>
@@ -110,7 +100,7 @@
         </div>
 
         <div class="md-form mb-2">
-          <input class="form-control" v-model="username" placeholder="Username">
+          <input class="form-control" v-model="new_username" placeholder="Username">
         </div>
 
         <div class="md-form mb-2">
@@ -118,16 +108,45 @@
         </div>
 
         <div class="md-form mb-2">
-          <input type="password" class="form-control" v-model="password" placeholder="Password">
+          <input type="password" class="form-control" v-model="new_password" placeholder="Password">
         </div>
 
         <div class="md-form mb-2">
-          <input type="password" class="form-control" v-model="confirm_password" placeholder="Confirm Password">
+          <input type="password" class="form-control" v-model="confirm_new_password" placeholder="Confirm Password">
         </div>
-
+        <center><span style="color:#8b0000">{{ registerResponse }}</span></center>
       </div>
       <div class="modal-footer d-flex justify-content-center">
-        <button class="btn modal-submit-button">Register</button>
+        <button class="btn modal-submit-button" v-on:click="registerUser">Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Login Modal   -->
+<div class="modal fade" id="modalLoginForm" tabindex="-1" aria-hidden="true" style="margin-top:100px">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Login</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body mx-2 form-group">
+        <div class="md-form mb-2">
+          <input class="form-control" v-model="username" placeholder="Username">
+        </div>
+
+        <div class="md-form mb-2">
+          <input type="password" class="form-control" v-model="password" placeholder="Confirm Password">
+        </div>
+        <center><span style="color:#8b0000">{{ loginResponse }}</span></center>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-center">
+        <button class="btn modal-submit-button" v-on:click="login">Login</button>
       </div>
     </div>
   </div>

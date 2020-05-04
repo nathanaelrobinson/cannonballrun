@@ -10,6 +10,6 @@ func index(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w, req, "./templates/index.html")
 }
 
-func newIndexx(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, "./templates/index.html")
+func home(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w, req, "./templates/home.html")
 }
