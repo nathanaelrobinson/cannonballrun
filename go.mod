@@ -1,4 +1,4 @@
-module github.com/nathanaelrobinson/cannonballrun
+module cannonballrun
 
 go 1.14
 
