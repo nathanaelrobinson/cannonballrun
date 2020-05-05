@@ -53,8 +53,9 @@ func main() {
 
 	// Logging for dev
 	// logger := handlers.CombinedLoggingHandler(os.Stdout, r)
+
 	srv := &http.Server{
-		Addr: "0.0.0.0:5000",
+		Addr: ":8080",
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
