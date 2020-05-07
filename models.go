@@ -12,21 +12,31 @@ type Workout struct {
 	StravaID int     `json:"strava_id,omitempty"`
 	Distance float64 `json:"distance,omitempty"`
 	UserID   uint    `json:"user_id"`
+	Time     int64   `json:"time"`
 }
 
 // User is a struct defining a User on the site and stores Strava link information
 type User struct {
 	gorm.Model
-	StravaID  int    `json:"strava_id,omitempty"`
-	Username  string `gorm:"size:255" json:"username,omitempty"`
-	FirstName string `gorm:"size:255" json:"first_name,omitempty"`
-	LastName  string `gorm:"size:255" json:"last_name,omitempty"`
-	Email     string `gorm:"size:255" json:"email,omitempty"`
-	Password  string `gorm:"size:255" json:"password,omitempty"`
+	StravaAthlete StravaAthlete
+	Username      string `gorm:"size:255" json:"username,omitempty"`
+	Email         string `gorm:"size:255" json:"email,omitempty"`
+	Password      string `gorm:"size:255" json:"password,omitempty"`
 
 	Teams      []Affiliation
 	AdminTeams []Team
 	Workouts   []Workout
+}
+
+type StravaAthlete struct {
+	gorm.Model
+	UserID       uint   `json:"user_id,omitempty"`
+	StravaID     int    `json:"strava_id,omitempty"`
+	ExpiresAt    int    `json:"expires_at,omitempty"`
+	RefreshToken string `gorm:"size:255" json:"refresh_token,omitempty"`
+	AccessToken  string `gorm:"size:255" json:"access_token,omitempty"`
+	UserName     string `gorm:"size:255" json:"username,omitempty"`
+	ProfileImage string `gorm:"size:255" json:"profile,omitempty"`
 }
 
 // Team is a struct defining a Team affiliation Users may join
@@ -68,6 +78,7 @@ type App struct {
 // Initialize opens our DB connectionn
 func (a *App) Initialize(dbDriver string, dbURI string) {
 	db, err := gorm.Open(dbDriver, dbURI)
+	db.LogMode(true)
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -75,7 +86,7 @@ func (a *App) Initialize(dbDriver string, dbURI string) {
 }
 
 // func main() {
-// 	db, err := gorm.Open("sqlite3", "test.db")
+// 	db, err := gorm.Open("sqlite3", "newtest.db")
 // 	if err != nil {
 // 		panic("failed to connect database")
 // 	}
@@ -84,16 +95,21 @@ func (a *App) Initialize(dbDriver string, dbURI string) {
 // 	// Migrate the schema
 // 	db.AutoMigrate(&Workout{})
 // 	db.AutoMigrate(&User{})
+// 	db.AutoMigrate(&StravaAthlete{})
 // 	db.AutoMigrate(&Team{})
 // 	db.AutoMigrate(&Affiliation{})
 //
 // 	// Create
-// 	nate := User{StravaID: 12345, Username: "Naterob", FirstName: "Nate", LastName: "Robinson", Email: "natrobsn@gmail.com", Password: "some text"}
-// 	nutc := Team{Name: "NUTC", Description: "Jolly band of geeds", UserID: nate.ID}
+// 	nate := User{Username: "Naterob", Email: "natrobsn@gmail.com", Password: "some text"}
 // 	db.Create(&nate)
-// 	db.Create(&User{StravaID: 12346, Username: "the Bear", FirstName: "Jon", LastName: "Cohen", Email: "joncohen@.com", Password: "password"})
-// 	db.Create(&User{StravaID: 12347, Username: "achey", FirstName: "Andrew", LastName: "Pfeifer", Email: "fief@gmail.com", Password: "password"})
-// 	db.Create(&User{StravaID: 12347, Username: "dictator", FirstName: "Luis", LastName: "Sahores", Email: "greatleader", Password: "password"})
+// 	strv := StravaAthlete{UserID: nate.ID, StravaID: 2222222, ExpiresAt: 199999, RefreshToken: "somecrazystring", AccessToken: "someotherlongassstring", UserName: "nathanael_robinson", ProfileImage: "https://someurl.com/"}
+// 	db.Create(&strv)
+//
+// 	nutc := Team{Name: "NUTC", Description: "Jolly band of geeds", UserID: nate.ID}
+//
+// 	db.Create(&User{Username: "the Bear", Email: "joncohen@.com", Password: "password"})
+// 	db.Create(&User{Username: "achey", Email: "fief@gmail.com", Password: "password"})
+// 	db.Create(&User{Username: "dictator", Email: "greatleader", Password: "password"})
 //
 // 	//
 // 	db.Create(&nutc)

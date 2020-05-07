@@ -3,9 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"time"
+	"io/ioutil"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -70,20 +74,23 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	email := r.FormValue("email")
-	firstname := r.FormValue("first_name")
-	lastname := r.FormValue("last_name")
+	stravaID := r.FormValue("strava_id")
+
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	checkInternalServerError(err, w)
 	// Check existence of user
+	var athlete StravaAthlete
+	a.DB.Where("strava_id = ?", stravaID).First(&athlete)
+
 	var user User
 	if a.DB.Where("username = ?", username).First(&user).RecordNotFound() {
 		user.Username = username
 		user.Password = string(hashedPassword)
 		user.Email = email
-		user.FirstName = firstname
-		user.LastName = lastname
 		a.DB.Create(&user)
+		athlete.UserID = user.ID
+		a.DB.Save(&athlete)
 
 		expiresAt := time.Now().Add(time.Minute * 100000).Unix()
 
@@ -155,5 +162,62 @@ func (a *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	resp["user"] = user
 	json.NewEncoder(w).Encode(resp)
 	return
+
+}
+
+// TeamHandlerList provides a list view of Teams
+func (a *App) UserHandlerList(w http.ResponseWriter, r *http.Request) {
+	var users []User
+	a.DB.Preload("StravaAthlete").Find(&users)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(&users)
+}
+
+// TeamHandlerList provides a list view of Teams
+func (a *App) UserHandlerDetail(w http.ResponseWriter, r *http.Request) {
+	userIDInt := r.Context().Value("user_id")
+	var user User
+	a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts").Preload("StravaAthlete").First(&user, userIDInt)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(&user)
+}
+
+
+// StravaAuthorization is an endpoint that handles Strava URI direct for OAuth Authorization
+func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
+	code := string(r.URL.Query()["code"][0])
+	baseURL, _ := url.Parse("https://www.strava.com/")
+	baseURL.Path = "api/v3/oauth/token"
+	params := url.Values{}
+	params.Add("code", code)
+	params.Add("client_id", string(os.Getenv("STRAVA_CLIENT_ID")))
+	params.Add("client_secret", string(os.Getenv("STRAVA_CLIENT_SECRET")))
+	params.Add("grant_type", "authorization_code")
+	baseURL.RawQuery = params.Encode()
+	fmt.Printf(baseURL.String())
+	// var athlete StravaAthlete
+
+	resp, err := http.Post(baseURL.String(), "application/json", nil)
+	checkInternalServerError(err, w)
+	body, err := ioutil.ReadAll(resp.Body)
+	checkInternalServerError(err, w)
+
+	responseData := make(map[string]interface{})
+	json.Unmarshal(body, &responseData)
+	innerAthlete := responseData["athlete"].(map[string]interface{})
+
+	var athlete StravaAthlete
+	athlete.AccessToken = responseData["access_token"].(string)
+	athlete.RefreshToken = responseData["refresh_token"].(string)
+	athlete.ExpiresAt = int(responseData["expires_at"].(float64))
+	athlete.StravaID = int(innerAthlete["id"].(float64))
+	athlete.UserName = innerAthlete["username"].(string)
+	athlete.ProfileImage = innerAthlete["profile"].(string)
+
+	a.DB.Save(&athlete)
+
+	// var athlete StravaAthlete
+	tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
+	tmpl.Execute(w, athlete)
 
 }

@@ -42,10 +42,10 @@
   <section id="hero">
     <div class="hero-container">
       <h1>The Cannonball Run</h1>
-      <h2>Sign Up With Your Friends to Race Other Runners Across the Country</h2>
+      <h2>Sign Up With Strava to Race Other Runners Across the Country</h2>
 
-        <div class="text-center"><button data-toggle="modal" v-on:click="loginFast" data-target="#modalLoginForm">Login</button></div>
-        <div class="text-center"><button data-toggle="modal" data-target="#modalRegisterForm">Register</button></div>
+        <div class="text-center"><button data-toggle="modal" v-on:click="loginFast(window.strava_id)" data-target="#modalLoginForm">Login</button></div>
+        <a href="https://www.strava.com/oauth/authorize?client_id=47034&response_type=code&redirect_uri=https://cannonballrun.io%2Fauthorize-strava&approval_prompt=force&scope=read,activity:read_all"><div class="text-center"><button>Register With Strava</button></div></a>
     </div>
   </section><!-- #hero -->
 
@@ -78,50 +78,6 @@
 
       </div>
     </section><!-- End About Section -->
-
-<!-- Registration Modal   -->
-<div class="modal fade" id="modalRegisterForm" tabindex="-1" aria-hidden="true" style="margin-top:100px">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header text-center">
-        <h4 class="modal-title w-100 font-weight-bold">Sign Up Today</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body mx-2 form-group">
-        <div class="md-form mb-2">
-          <input class="form-control" v-model="first_name" placeholder="First Name">
-        </div>
-
-        <div class="md-form mb-2">
-          <input class="form-control" v-model="last_name" placeholder="Last Name">
-        </div>
-
-        <div class="md-form mb-2">
-          <input class="form-control" v-model="new_username" placeholder="Username">
-        </div>
-
-        <div class="md-form mb-2">
-          <input type="email" class="form-control" v-model="email" placeholder="Email">
-        </div>
-
-        <div class="md-form mb-2">
-          <input type="password" class="form-control" v-model="new_password" placeholder="Password">
-        </div>
-
-        <div class="md-form mb-2">
-          <input type="password" class="form-control" v-model="confirm_new_password" placeholder="Confirm Password">
-        </div>
-        <center><span style="color:#8b0000">{{ registerResponse }}</span></center>
-      </div>
-      <div class="modal-footer d-flex justify-content-center">
-        <button class="btn modal-submit-button" v-on:click="registerUser">Register</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Login Modal   -->
 <div class="modal fade" id="modalLoginForm" tabindex="-1" aria-hidden="true" style="margin-top:100px">

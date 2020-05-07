@@ -22,7 +22,8 @@ data : {
     confirm_new_password: null,
     loginResponse: null,
     registerResponse: null,
-    teams : []
+    teams : [],
+    stravaID : window.strava_id,
 },
 methods : {
   registerUser : function(){
@@ -30,16 +31,15 @@ methods : {
         this.registerResponse = "Passwords Do Not Match"
         return
     };
-    if ((this.first_name == null) || (this.last_name == null) || (this.email == null) || (this.new_username == null) || (this.new_password == null)){
+    if ((this.email == null) || (this.new_username == null) || (this.new_password == null)){
           this.registerResponse = "All Fields Required"
           return
     };
     var postForm = new FormData();
     postForm.set("username", this.new_username)
     postForm.set("password", this.new_password)
-    postForm.set("first_name", this.first_name)
-    postForm.set("last_name", this.last_name)
     postForm.set("email", this.email)
+    postForm.set("strava_id", this.stravaID)
     axios({
     method: 'post',
     url: '/register',
@@ -54,15 +54,16 @@ methods : {
       token = response.data["token"];
       console.log(token)
       localStorage.setItem('user_token', token)
-      window.location.replace("/home");
+      window.location.assign("/home");
     })
     .catch(error => {});
   },
 
   loginFast : function() {
-    if (localStorage.user_token != null){
-      window.location.replace("/home");
-    }
+    console.log(this.$strava_id)
+    // if (localStorage.user_token != null){
+    //   window.location.assign("/home");
+    // }
   },
 
   login : function(){
@@ -83,7 +84,7 @@ methods : {
       token = response.data["token"];
       console.log(token)
       localStorage.setItem('user_token', token)
-      window.location.replace("/home");
+      window.location.assign("/home");
     })
     .catch(error => {});
   },

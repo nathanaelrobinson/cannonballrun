@@ -24,8 +24,8 @@ func JwtVerify(next http.Handler) http.Handler {
 			json.NewEncoder(w).Encode(Exception{Message: "Missing auth token"})
 			return
 		}
-		tk := Token{}
-		claims := jwt.MapClaims{}
+		// tk := Token{}
+		claims := &Token{}
 		_, err := jwt.ParseWithClaims(header, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("secret"), nil
 		})
@@ -36,7 +36,7 @@ func JwtVerify(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", tk)
+		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

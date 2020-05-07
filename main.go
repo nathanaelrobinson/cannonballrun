@@ -20,7 +20,7 @@ var (
 
 func main() {
 	a := &App{}
-	a.Initialize("sqlite3", "test.db")
+	a.Initialize("sqlite3", "newtest.db")
 	defer a.DB.Close()
 
 	var wait time.Duration
@@ -34,11 +34,14 @@ func main() {
 	r.HandleFunc("/register", a.RegisterHandler).Methods("POST")
 	r.HandleFunc("/login", a.LoginHandler).Methods("POST")
 	r.HandleFunc("/home", home)
+	r.HandleFunc("/authorize-strava", a.StravaAuthorization).Methods("GET", "POST")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(JwtVerify)
 	api.HandleFunc("/teams/{id:[0-9]+}", a.TeamHandlerDetail).Methods("GET", "PUT", "POST", "DELETE")
 	api.HandleFunc("/teams", a.TeamHandlerList).Methods("GET")
+	api.HandleFunc("/users", a.UserHandlerList).Methods("GET")
+	api.HandleFunc("/users/me", a.UserHandlerDetail).Methods("GET")
 
 	// Define a subrouter to handle files at static for accessing static content
 	static := r.PathPrefix("/assets").Subrouter()
