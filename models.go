@@ -1,9 +1,11 @@
 package main
 
 import (
+	_ "database/sql"
+
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 // Workout is a struct defining a workout information delivered from Strava API
@@ -86,7 +88,16 @@ func (a *App) Initialize(dbDriver string, dbURI string) {
 }
 
 // func main() {
-// 	db, err := gorm.Open("sqlite3", "newtest.db")
+// 	// var (
+// 	// 	dbUser                 = "nate"
+// 	// 	dbPwd                  = "ycombinator"
+// 	// 	instanceConnectionName = "cannonballrun:us-central1:cannonballrun"
+// 	// 	dbName                 = "test"
+// 	// )
+// 	// var dbURI string
+// 	// dbURI = fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
+// 	// fmt.Println(dbURI)
+// 	db, err := gorm.Open("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
 // 	if err != nil {
 // 		panic("failed to connect database")
 // 	}

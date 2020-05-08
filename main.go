@@ -9,9 +9,12 @@ import (
 	"os/signal"
 	"time"
 
+	_ "database/sql"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	_ "github.com/mattn/go-sqlite3"
+
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
 )
 
 var (
@@ -20,7 +23,7 @@ var (
 
 func main() {
 	a := &App{}
-	a.Initialize("sqlite3", "newtest.db")
+	a.Initialize("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
 	defer a.DB.Close()
 
 	var wait time.Duration
@@ -57,8 +60,14 @@ func main() {
 	// Logging for dev
 	// logger := handlers.CombinedLoggingHandler(os.Stdout, r)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
 	srv := &http.Server{
-		Addr: ":8080",
+		Addr: ":" + port,
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
