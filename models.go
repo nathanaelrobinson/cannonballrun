@@ -15,6 +15,7 @@ type Workout struct {
 	Distance float64 `json:"distance,omitempty"`
 	UserID   uint    `json:"user_id"`
 	Time     int64   `json:"time"`
+	Type     string  `json:"type"`
 }
 
 // User is a struct defining a User on the site and stores Strava link information
@@ -75,6 +76,17 @@ type Exception struct {
 // App is used to initialize a database and hold our handler functions
 type App struct {
 	DB *gorm.DB
+}
+
+type Webhook struct {
+	StravaAthleteID uint        `json:"user_id"`
+	AspectType      string      `json:"aspect_type"`
+	EventTime       float64     `json:"event_time"`
+	ObjectId        float64     `json:"object_id"`
+	ObjectType      string      `json:"object_type"`
+	OwnerID         float64     `json:"owner_id"`
+	Distance        float64     `json:"distance"`
+	Updates         interface{} `json:"updates"`
 }
 
 // Initialize opens our DB connectionn

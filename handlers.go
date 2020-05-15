@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
-	"io/ioutil"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -67,6 +67,14 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// TeamHandlerList provides a list view of Teams
+func (a *App) JoinTeam(w http.ResponseWriter, r *http.Request) {
+	var team Team
+	a.DB.Preload("Runners").Find(&team)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(&team)
+}
+
 // RegisterHandler to Register a new user
 func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -75,7 +83,6 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	email := r.FormValue("email")
 	stravaID := r.FormValue("strava_id")
-
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	checkInternalServerError(err, w)
@@ -177,11 +184,10 @@ func (a *App) UserHandlerList(w http.ResponseWriter, r *http.Request) {
 func (a *App) UserHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	userIDInt := r.Context().Value("user_id")
 	var user User
-	a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts").Preload("StravaAthlete").First(&user, userIDInt)
+	a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts", "distance > 0").Preload("StravaAthlete").First(&user, userIDInt)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(&user)
 }
-
 
 // StravaAuthorization is an endpoint that handles Strava URI direct for OAuth Authorization
 func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
@@ -214,10 +220,55 @@ func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
 	athlete.UserName = innerAthlete["username"].(string)
 	athlete.ProfileImage = innerAthlete["profile"].(string)
 
-	a.DB.Save(&athlete)
+	var previousAthlete StravaAthlete
+	if a.DB.Where("strava_id = ?", athlete.StravaID).First(&previousAthlete).RecordNotFound() {
+		a.DB.Save(&athlete)
+		tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
+		tmpl.Execute(w, athlete)
+	}
 
 	// var athlete StravaAthlete
 	tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
-	tmpl.Execute(w, athlete)
+	tmpl.Execute(w, previousAthlete)
 
+}
+
+// TeamHandlerList provides a list view of Teams
+func (a *App) CreateStravaWebhook(w http.ResponseWriter, r *http.Request) {
+	hubChallenge := string(r.URL.Query()["hub.challenge"][0])
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	var resp = map[string]interface{}{"hub.challenge": hubChallenge}
+	json.NewEncoder(w).Encode(&resp)
+}
+
+// StravaWebhookHandler takes post requests from Strava and updates workout information
+func (a *App) StravaWebhookHandler(w http.ResponseWriter, r *http.Request) {
+	var webhook Webhook
+	// var workout Workout
+	body, err := ioutil.ReadAll(r.Body)
+	checkInternalServerError(err, w)
+	json.Unmarshal(body, &webhook)
+	var stravaathlete StravaAthlete
+	a.DB.Where("strava_id = ?", int(webhook.OwnerID)).First(&stravaathlete)
+	// Currently do not save workout titles/types
+	// updates := make(map[string]interface{})
+	// if webhook.Updates != nil {
+	// 	updates = webhook.Updates.(map[string]interface{})
+	// }
+
+	var workout Workout
+	if webhook.ObjectType == "activity" {
+		if webhook.AspectType == "create" {
+			workout.StravaID = int(webhook.ObjectId)
+			workout.UserID = stravaathlete.UserID
+			workout.Distance = webhook.Distance
+			// Need to Enable a function to grab the workout time and distance
+			a.DB.Create(&workout)
+		} else if webhook.AspectType == "delete" {
+			a.DB.Where("strava_id = ?", webhook.ObjectId).Delete(Workout{})
+		} else if webhook.AspectType == "update" {
+			//pass
+		}
+	}
+	w.WriteHeader(200)
 }

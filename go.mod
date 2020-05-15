@@ -12,9 +12,14 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/jinzhu/gorm v1.9.12
+	github.com/kisielk/errcheck v1.2.0 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/mdempsky/maligned v0.0.0-20180708014732-6e39bd26a8c8 // indirect
+	github.com/mdempsky/unconvert v0.0.0-20200228143138-95ecdbfc0b5f // indirect
+	github.com/mibk/dupl v1.0.0 // indirect
 	github.com/opennota/check v0.0.0-20180911053232-0c771f5545ff // indirect
+	github.com/securego/gosec v0.0.0-20200401082031-e946c8c39989 // indirect
 	github.com/strava/go.strava v0.0.0-20180612235916-99ebe972ba16
 	github.com/stripe/safesql v0.2.0 // indirect
 	github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9 // indirect

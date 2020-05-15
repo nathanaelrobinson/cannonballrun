@@ -18,12 +18,14 @@ import (
 )
 
 var (
-	err error
+	err     error
+	jobChan chan *Webhook
 )
 
 func main() {
 	a := &App{}
-	a.Initialize("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
+	dbURI := os.Getenv("DB_CONNECTION")
+	a.Initialize("mysql", dbURI)
 	defer a.DB.Close()
 
 	var wait time.Duration
@@ -38,9 +40,12 @@ func main() {
 	r.HandleFunc("/login", a.LoginHandler).Methods("POST")
 	r.HandleFunc("/home", home)
 	r.HandleFunc("/authorize-strava", a.StravaAuthorization).Methods("GET", "POST")
+	r.HandleFunc("/strava-webhook", a.CreateStravaWebhook).Methods("GET")
+	r.HandleFunc("/strava-webhook", a.StravaWebhookHandler).Methods("POST")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(JwtVerify)
+	api.HandleFunc("/teams/{id:[0-9]+}/join", a.JoinTeam).Methods("GET")
 	api.HandleFunc("/teams/{id:[0-9]+}", a.TeamHandlerDetail).Methods("GET", "PUT", "POST", "DELETE")
 	api.HandleFunc("/teams", a.TeamHandlerList).Methods("GET")
 	api.HandleFunc("/users", a.UserHandlerList).Methods("GET")
@@ -74,6 +79,10 @@ func main() {
 		IdleTimeout:  time.Second * 60,
 		Handler:      logger, // Pass our instance of gorilla/mux in.
 	}
+
+	// Set up a goroutine to handle asyncronous tasks
+	jobChan := make(chan *Webhook, 100)
+	go updateWorkouts(jobChan)
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {

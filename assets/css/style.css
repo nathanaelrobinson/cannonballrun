@@ -171,7 +171,6 @@ h1, h2, h3, h4, h5, h6, .font-primary {
   background: url("../img/home-splash.jpg") center center;
   background-size: cover;
   position: relative;
-  margin-top: -80px;
   z-index: 9;
 }
 
