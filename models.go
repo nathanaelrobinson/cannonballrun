@@ -99,36 +99,21 @@ func (a *App) Initialize(dbDriver string, dbURI string) {
 	a.DB = db
 }
 
+// Uncomment below and run file to migrate models
 // func main() {
-
-// db, err := gorm.Open("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
-// if err != nil {
-// 	panic("failed to connect database")
-// }
-// defer db.Close()
+//
+// 	dbURI := os.Getenv("DB_CONNECTION")
+// 	db, err := gorm.Open("mysql", dbURI)
+// 	if err != nil {
+// 		panic("failed to connect database")
+// 	}
+// 	defer db.Close()
 //
 // 	// Migrate the schema
-// db.AutoMigrate(&Workout{})
+// 	db.AutoMigrate(&Workout{})
 // 	db.AutoMigrate(&User{})
 // 	db.AutoMigrate(&StravaAthlete{})
 // 	db.AutoMigrate(&Team{})
 // 	db.AutoMigrate(&Affiliation{})
-//
-// 	// Create
-// 	nate := User{Username: "Naterob", Email: "natrobsn@gmail.com", Password: "some text"}
-// 	db.Create(&nate)
-// 	strv := StravaAthlete{UserID: nate.ID, StravaID: 2222222, ExpiresAt: 199999, RefreshToken: "somecrazystring", AccessToken: "someotherlongassstring", UserName: "nathanael_robinson", ProfileImage: "https://someurl.com/"}
-// 	db.Create(&strv)
-//
-// 	nutc := Team{Name: "NUTC", Description: "Jolly band of geeds", UserID: nate.ID}
-//
-// 	db.Create(&User{Username: "the Bear", Email: "joncohen@.com", Password: "password"})
-// 	db.Create(&User{Username: "achey", Email: "fief@gmail.com", Password: "password"})
-// 	db.Create(&User{Username: "dictator", Email: "greatleader", Password: "password"})
-//
-// 	//
-// 	db.Create(&nutc)
-//
-// 	db.Create(&Affiliation{TeamID: nutc.ID, UserID: nate.ID, Status: "Active"})
 //
 // }
