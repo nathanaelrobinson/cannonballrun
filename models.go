@@ -15,7 +15,7 @@ type Workout struct {
 	Distance float64 `json:"distance,omitempty"`
 	UserID   uint    `json:"user_id"`
 	Time     int64   `json:"time"`
-	Type     string  `json:"type"`
+	Type     string  `gorm:"size:255" json:"type"`
 }
 
 // User is a struct defining a User on the site and stores Strava link information
@@ -100,23 +100,15 @@ func (a *App) Initialize(dbDriver string, dbURI string) {
 }
 
 // func main() {
-// 	// var (
-// 	// 	dbUser                 = "nate"
-// 	// 	dbPwd                  = "ycombinator"
-// 	// 	instanceConnectionName = "cannonballrun:us-central1:cannonballrun"
-// 	// 	dbName                 = "test"
-// 	// )
-// 	// var dbURI string
-// 	// dbURI = fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
-// 	// fmt.Println(dbURI)
-// 	db, err := gorm.Open("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
-// 	defer db.Close()
+
+// db, err := gorm.Open("mysql", "nate:ycombinator@tcp(35.188.216.81:3306)/test?charset=utf8&parseTime=True&loc=UTC")
+// if err != nil {
+// 	panic("failed to connect database")
+// }
+// defer db.Close()
 //
 // 	// Migrate the schema
-// 	db.AutoMigrate(&Workout{})
+// db.AutoMigrate(&Workout{})
 // 	db.AutoMigrate(&User{})
 // 	db.AutoMigrate(&StravaAthlete{})
 // 	db.AutoMigrate(&Team{})

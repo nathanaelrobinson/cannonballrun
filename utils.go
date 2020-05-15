@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -43,29 +47,53 @@ func formatRequest(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
-func (a *App) updateWorkouts(jobChan <-chan *Webhook) {
+func (a *App) UpdateWorkouts(jobChan <-chan Webhook) {
 	for webhook := range jobChan {
 		// Retrieve Strava Users
+		fmt.Println("Reached Function")
 		var athlete StravaAthlete
-
-		// Grap the User of the workout and determine if their access token has expired.
 		a.DB.Where("strava_id = ?", webhook.OwnerID).First(&athlete)
-		if int64(athlete.ExpiresAt) > time.Now().Unix() {
-			// Handle expired Access Token
+		fmt.Printf("%v", athlete)
+		// Grab the User of the workout and determine if their access token has expired.
+
+		if int64(athlete.ExpiresAt) < time.Now().Unix() {
+			baseURL, _ := url.Parse("https://www.strava.com/")
+			baseURL.Path = "api/v3/oauth/token"
+			params := url.Values{}
+			params.Add("client_id", string(os.Getenv("STRAVA_CLIENT_ID")))
+			params.Add("client_secret", string(os.Getenv("STRAVA_CLIENT_SECRET")))
+			params.Add("grant_type", "refresh_token")
+			params.Add("refresh_token", athlete.RefreshToken)
+			baseURL.RawQuery = params.Encode()
+			fmt.Printf(baseURL.String())
+			// var athlete StravaAthlete
+			resp, _ := http.Post(baseURL.String(), "application/json", nil)
+			body, _ := ioutil.ReadAll(resp.Body)
+			responseData := make(map[string]interface{})
+			json.Unmarshal(body, &responseData)
+
+			athlete.AccessToken = responseData["access_token"].(string)
+			athlete.RefreshToken = responseData["refresh_token"].(string)
+			athlete.ExpiresAt = int(responseData["expires_at"].(float64))
+
+			a.DB.Save(&athlete)
+
 		}
 		// Use Updated Access Token to create client
+		var workout Workout
+
 		client := strava.NewClient(athlete.AccessToken)
 		service := strava.NewActivitiesService(client)
-		activity, err := service.Get(int64(webhook.ObjectId)).IncludeAllEfforts().Do()
-		if err != nil {
-			fmt.Println(err)
-		}
 
-		var workout Workout
-		workout.Distance = activity.Distance
-		workout.StravaID = int(activity.Id)
-		// workout.Type = activity.Type
-		workout.Time = int64(activity.ElapsedTime)
+		activity, err := service.Get(int64(webhook.ObjectId)).IncludeAllEfforts().Do()
+		if err == nil {
+			workout.Distance = activity.Distance
+			workout.StravaID = int(activity.Id)
+			workout.Type = activity.Type.String()
+			workout.Time = int64(activity.ElapsedTime)
+			workout.UserID = athlete.UserID
+			a.DB.Create(&workout)
+		}
 		//Update, Save, and Exit
 
 	}

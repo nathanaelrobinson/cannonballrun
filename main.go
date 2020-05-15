@@ -19,7 +19,7 @@ import (
 
 var (
 	err     error
-	jobChan chan *Webhook
+	jobChan chan Webhook
 )
 
 func main() {
@@ -81,8 +81,8 @@ func main() {
 	}
 
 	// Set up a goroutine to handle asyncronous tasks
-	jobChan := make(chan *Webhook, 100)
-	go updateWorkouts(jobChan)
+	jobChan = make(chan Webhook, 100)
+	go a.UpdateWorkouts(jobChan)
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {

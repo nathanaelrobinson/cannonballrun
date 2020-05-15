@@ -243,32 +243,22 @@ func (a *App) CreateStravaWebhook(w http.ResponseWriter, r *http.Request) {
 
 // StravaWebhookHandler takes post requests from Strava and updates workout information
 func (a *App) StravaWebhookHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
 	var webhook Webhook
 	// var workout Workout
 	body, err := ioutil.ReadAll(r.Body)
 	checkInternalServerError(err, w)
 	json.Unmarshal(body, &webhook)
-	var stravaathlete StravaAthlete
-	a.DB.Where("strava_id = ?", int(webhook.OwnerID)).First(&stravaathlete)
-	// Currently do not save workout titles/types
-	// updates := make(map[string]interface{})
-	// if webhook.Updates != nil {
-	// 	updates = webhook.Updates.(map[string]interface{})
-	// }
 
-	var workout Workout
 	if webhook.ObjectType == "activity" {
 		if webhook.AspectType == "create" {
-			workout.StravaID = int(webhook.ObjectId)
-			workout.UserID = stravaathlete.UserID
-			workout.Distance = webhook.Distance
-			// Need to Enable a function to grab the workout time and distance
-			a.DB.Create(&workout)
+
+			// Send webhook to job channel to create workout
+			jobChan <- webhook
+
 		} else if webhook.AspectType == "delete" {
-			a.DB.Where("strava_id = ?", webhook.ObjectId).Delete(Workout{})
-		} else if webhook.AspectType == "update" {
-			//pass
+			a.DB.Where("strava_id = ?", int(webhook.ObjectId)).Delete(Workout{})
 		}
 	}
-	w.WriteHeader(200)
+
 }
