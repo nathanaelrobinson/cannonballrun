@@ -12,12 +12,12 @@ var App = new Vue({
 // Vue instance options here
 el: '#app', //
 data : {
-    adminTeams : null,
-    userTeams : null,
-    allTeams : null,
-    workouts : null,
+    adminTeams : '',
+    userTeams : '',
+    allTeams : '',
+    workouts : '',
     detailTeam: '',
-    detailRunners: null,
+    detailRunners: '',
 },
 methods : {
   loadWorkouts : function(){
