@@ -32,6 +32,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
 
 </head>
 
@@ -51,7 +52,7 @@
     <table class="table table-hover table-borderless">
       <thead>
         <tr>
-          <th scope="col">My Teams</th>
+          <th scope="col">My Team</th>
         </tr>
       </thead>
       <tbody>
@@ -63,17 +64,27 @@
     <table class="table table-hover table-borderless">
       <thead>
         <tr>
-          <th scope="col">Available Teams</th>
+          <th scope="col">Curent Standings</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="team in allTeams">
-          <th v-on:click="selectTeam(team)" scope="row">{{ team.name }}<span class="badge badge-pill badge-dark pull-right" style="margin-left:20px">{{ team.Runners.length }}/10</span></th>
+          <th @click="selectTeam(team)" scope="row" style="padding-left:10%">{{ team.name }}<span class="badge badge-pill badge-dark" style="margin-left:20px; float:right">{{ (team.total_distance/1609.34).toFixed(2) }} mi</span></th>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="col col-8" id="Homehero">
+  <div class="col col-8" style="padding-top:5%">
+    <div v-for="team in allTeams" class="row mb-1">
+      <div class="col-sm-2">{{ team.name }}:</div>
+      <div class="col-sm-10 pt-1">
+        <b-progress :max="2800" variant="success" height="3rem">
+          <b-progress-bar  :value="team.total_distance/1609.34" >
+            <span><strong>{{(team.total_distance/1609.34).toFixed(2) }} / {{ 2800 }} mi</strong></span>
+          </b-progress-bar>
+        </b-progress>
+      </div>
+    </div>
 
   </div>
   <div class="col col-2">
@@ -84,8 +95,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="workout in workouts">
-          <th scope="row">{{ workout.distance }} m</th>
+        <tr v-for="workout in workouts.slice(0,5)">
+          <th scope="row"><a :href="'https://strava.com/activities/' + workout.strava_id">{{ (workout.distance/1609.34).toPrecision(3) }} mi - <span style="font-size:.8em">{{ convertToDate(workout.CreatedAt) }}<a/></span></th>
         </tr>
       </tbody>
     </table>
@@ -105,12 +116,20 @@
           </button>
         </div>
         <div class="modal-body">
-          ...
+          {{ detailTeam.description }}
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
-        </div>
+        <table class="table table-hover table-borderless">
+          <thead>
+            <tr>
+              <th scope="col">Runners</th>
+            </tr>
+          </thead>
+          <tbody>
+              <tr v-for="runner in detailRunners">
+                <th scope="row">{{ runner.username }} <span style="font-size:.8em">{{ (runner.total_distance/1609.34).toFixed(2) }} mi<a/></span></th>
+              </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

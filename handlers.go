@@ -31,7 +31,7 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	var team Team
 	switch {
 	case r.Method == "GET":
-		a.DB.Preload("Runners", "status = 'Active'").First(&team, vars["id"])
+		a.DB.First(&team, vars["id"])
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(&team)
 		return
@@ -67,12 +67,30 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// TeamHandlerDetail provides a list view of Teams
+func (a *App) TeamAthletes(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var runners []RunnerOutput
+	a.DB.Table("workouts").Select("users.id as user_id, users.username, count(distinct workouts.id) as activities_count, sum(workouts.distance) as total_distance").Joins("left join users on users.id = workouts.user_id").Joins("left join affiliations on affiliations.user_id = users.id").Group("users.id, users.username").Where("workouts.type = 'Run' and affiliations.team_id = ?", vars["id"]).Order("sum(workouts.distance) desc").Scan(&runners)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(&runners)
+	return
+
+}
+
 // TeamHandlerList provides a list view of Teams
 func (a *App) JoinTeam(w http.ResponseWriter, r *http.Request) {
-	var team Team
-	a.DB.Preload("Runners").Find(&team)
+	userIDInt := r.Context().Value("user_id")
+	vars := mux.Vars(r)
+	teamID, _ := strconv.ParseInt(vars["id"], 10, 64)
+	var affiliation Affiliation
+	affiliation.UserID = userIDInt.(uint)
+	affiliation.TeamID = uint(teamID)
+	affiliation.Status = "Pending"
+
+	a.DB.Create(&affiliation)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(&team)
+	w.WriteHeader(200)
 }
 
 // RegisterHandler to Register a new user
@@ -127,7 +145,8 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// LoginHandler has some data
+// LoginHandler takes username and password form data. If this data matches the hashed value in the db, we return login credentials via
+// a JWT and redirect the user to the home page. Otherwise we return the provided error.
 func (a *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := r.FormValue("username")
@@ -182,11 +201,41 @@ func (a *App) UserHandlerList(w http.ResponseWriter, r *http.Request) {
 
 // TeamHandlerList provides a list view of Teams
 func (a *App) UserHandlerDetail(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 	userIDInt := r.Context().Value("user_id")
-	var user User
-	a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts", "distance > 0").Preload("StravaAthlete").First(&user, userIDInt)
+	data := vars["data"]
+	switch {
+	case data == "affiliations":
+		var teams []Team
+		a.DB.Joins("left join affiliations on affiliations.team_id = teams.id").Where("affiliations.user_id = ? and affiliations.status = 'Active'", userIDInt).Find(&teams)
+		json.NewEncoder(w).Encode(&teams)
+	case data == "details":
+		var user User
+		a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts", "distance > 0 and type  = 'Run'").Preload("StravaAthlete").First(&user, userIDInt)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(&user)
+	case data == "admins":
+		var teams []Team
+		a.DB.Where("user_id = ?", userIDInt).Find(&teams)
+		json.NewEncoder(w).Encode(&teams)
+	case data == "workouts":
+		var workouts []Workout
+		a.DB.Where("distance > 0 and type  = 'Run' and user_id = ?", userIDInt).Order("created_at desc").Find(&workouts)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(&workouts)
+	}
+
+	// a.DB.Preload("Teams").Preload("AdminTeams").Preload("Workouts", "distance > 0 and type  = 'Run'").Preload("StravaAthlete").First(&user, userIDInt)
+	// w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	// json.NewEncoder(w).Encode(&user)
+}
+
+// TeamHandlerList provides a list view of Teams
+func (a *App) TeamsStatus(w http.ResponseWriter, r *http.Request) {
+	var teams []TeamOutput
+	a.DB.Table("workouts").Select("teams.id as team_id, teams.name, teams.description, sum(workouts.distance) as distance").Joins("left join affiliations on affiliations.user_id = workouts.user_id").Joins("left join teams on teams.id = affiliations.team_id").Group("teams.id, teams.name, teams.description").Where("workouts.type = ? and teams.id is not null", "Run").Order("sum(workouts.distance) desc").Scan(&teams)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(&user)
+	json.NewEncoder(w).Encode(&teams)
 }
 
 // StravaAuthorization is an endpoint that handles Strava URI direct for OAuth Authorization
@@ -233,7 +282,7 @@ func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// TeamHandlerList provides a list view of Teams
+// CreateStravaWebhook is a helper function to first create a webhook, should no longer be required
 func (a *App) CreateStravaWebhook(w http.ResponseWriter, r *http.Request) {
 	hubChallenge := string(r.URL.Query()["hub.challenge"][0])
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -243,9 +292,11 @@ func (a *App) CreateStravaWebhook(w http.ResponseWriter, r *http.Request) {
 
 // StravaWebhookHandler takes post requests from Strava and updates workout information
 func (a *App) StravaWebhookHandler(w http.ResponseWriter, r *http.Request) {
+	// Immediately write 200 header before handling data
 	w.WriteHeader(200)
+
+	// Retreview webhook information to a struct, send a copy of that struct to a channel for handling by a concurrent thread
 	var webhook Webhook
-	// var workout Workout
 	body, err := ioutil.ReadAll(r.Body)
 	checkInternalServerError(err, w)
 	json.Unmarshal(body, &webhook)
@@ -257,8 +308,10 @@ func (a *App) StravaWebhookHandler(w http.ResponseWriter, r *http.Request) {
 			jobChan <- webhook
 
 		} else if webhook.AspectType == "delete" {
+			// TODO: Handle Deletes concurrently like creations above (although this is less important)
 			a.DB.Where("strava_id = ?", int(webhook.ObjectId)).Delete(Workout{})
 		}
+		// TODO: Account for Updates to workouts via strava
 	}
 
 }

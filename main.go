@@ -45,11 +45,13 @@ func main() {
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(JwtVerify)
-	api.HandleFunc("/teams/{id:[0-9]+}/join", a.JoinTeam).Methods("GET")
+	api.HandleFunc("/teams/{id:[0-9]+}/join", a.JoinTeam).Methods("POST")
 	api.HandleFunc("/teams/{id:[0-9]+}", a.TeamHandlerDetail).Methods("GET", "PUT", "POST", "DELETE")
+	api.HandleFunc("/team/details/{id:[0-9]+}", a.TeamAthletes).Methods("GET")
+	api.HandleFunc("/users/me/{data}", a.UserHandlerDetail).Methods("GET")
 	api.HandleFunc("/teams", a.TeamHandlerList).Methods("GET")
 	api.HandleFunc("/users", a.UserHandlerList).Methods("GET")
-	api.HandleFunc("/users/me", a.UserHandlerDetail).Methods("GET")
+	api.HandleFunc("/teamsstatus", a.TeamsStatus).Methods("GET")
 
 	// Define a subrouter to handle files at static for accessing static content
 	static := r.PathPrefix("/assets").Subrouter()

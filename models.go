@@ -89,6 +89,26 @@ type Webhook struct {
 	Updates         interface{} `json:"updates"`
 }
 
+type TeamOutput struct {
+	TeamID      uint    `json:"team_id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Distance    float64 `json:"total_distance"`
+}
+
+type RunnerOutput struct {
+	UserID          uint    `json:"user_id"`
+	Username        string  `json:"username"`
+	ActivitiesCount int     `json:"activities_count"`
+	TotalDistance   float64 `json:"total_distance"`
+}
+
+// type RaceEvent struct {
+// 	Name        string    `json:"user_id"`
+// 	Active      bool      `json:"active"`
+// 	CompletedAt time.Time `json:"completed_at"`
+// }
+
 // Initialize opens our DB connectionn
 func (a *App) Initialize(dbDriver string, dbURI string) {
 	db, err := gorm.Open(dbDriver, dbURI)

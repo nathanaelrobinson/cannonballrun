@@ -1,10 +1,12 @@
-/**
-* Template Name: Siimple - v2.0.1
-* Template URL: https://bootstrapmade.com/free-bootstrap-landing-page/
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
-*/
+Vue.component('team-modal', {
+    template: '#modal-template',
+    props: ['team'],
+    data: function() {
+        return {
 
+        }
+    }
+});
 // New Vue instance
 var App = new Vue({
 // Vue instance options here
@@ -14,53 +16,93 @@ data : {
     userTeams : null,
     allTeams : null,
     workouts : null,
-    detailTeam: null,
+    detailTeam: '',
+    detailRunners: null,
 },
 methods : {
-  loadUserData : function(){
+  loadWorkouts : function(){
     axios({
     method: 'get',
-    url: '/api/users/me',
+    url: '/api/users/me/workouts',
     headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
     })
     .then(response => {
-      this.adminTeams = response.data.AdminTeams
-      this.userTeams = response.data.Teams
-      this.workouts = response.data.Workouts
-      this.detailTeam = response.data.Teams[0]
+      this.workouts = response.data
       })
     .catch(error => {});
   },
   loadAllTeams : function(){
     axios({
     method: 'get',
-    url: '/api/teams',
+    url: '/api/teamsstatus',
     headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
     })
     .then(response => {
       this.allTeams = response.data
+      })
+    .catch(error => {});
+  },
+  loadMyTeams : function(){
+    axios({
+    method: 'get',
+    url: '/api/users/me/affiliations',
+    headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
+    })
+    .then(response => {
+      this.userTeams = response.data
+      })
+    .catch(error => {});
+  },
+  loadRunners : function(team){
+    axios({
+    method: 'get',
+    url: '/api/team/details/' + team.team_id,
+    headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
+    })
+    .then(response => {
+      this.detailRunners = response.data
+      return
       })
     .catch(error => {});
   },
   selectTeam : function(team){
+    this.detailTeam = team
+    this.loadRunners(team)
+    // axios({
+    // method: 'get',
+    // url: '/api/team/' + str(team.ID) + '/highlight',
+    // headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
+    // })
+    // .then(response => {
+    //   this.allTeams = response.data
+    //   })
+    // .catch(error => {});
+    $('#teamModal').modal('show')
+    // this.detailTeam = team
+    console.log(team.name)
+  },
+  joinTeam : function(team) {
     axios({
-    method: 'get',
-    url: '/api/team/' + str(team.ID) + '/highlight',
+    method: 'post',
+    url: '/api/teams/' + team.ID + '/join',
     headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
     })
     .then(response => {
-      this.allTeams = response.data
+      console.log(response)
       })
     .catch(error => {});
-    $('#teamModal').modal('show')
-    this.detailTeam = team
-    console.log(team.name)
   },
-  joinTeam : function(teamID) {
-    console.log(teamID)
-    }
+
+  convertToDate : function(timestring) {
+    unix = Date.parse(timestring)
+    s = new Date(unix).toLocaleDateString("en-US")
+    return s
   },
+},
 })
+
+
 Vue.config.devtools = true;
-App.loadUserData();
+App.loadWorkouts();
 App.loadAllTeams();
+App.loadMyTeams();
