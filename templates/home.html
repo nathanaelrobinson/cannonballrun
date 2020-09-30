@@ -57,7 +57,7 @@
       </thead>
       <tbody>
         <tr v-for="team in userTeams">
-          <th scope="row">{{ team.name }}</th>
+          <th @click="selectTeam(team)" scope="row" style="padding-left:10%">{{ team.name }}<span class="badge badge-pill badge-dark" style="margin-left:20px;">Active</span></th>
         </tr>
       </tbody>
     </table>

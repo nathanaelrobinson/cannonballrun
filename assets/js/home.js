@@ -56,7 +56,7 @@ methods : {
   loadRunners : function(team){
     axios({
     method: 'get',
-    url: '/api/team/details/' + team.team_id,
+    url: '/api/team/details/' + team.id,
     headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.user_token}
     })
     .then(response => {

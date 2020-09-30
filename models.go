@@ -90,7 +90,7 @@ type Webhook struct {
 }
 
 type TeamOutput struct {
-	TeamID      uint    `json:"team_id"`
+	TeamID      uint    `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Distance    float64 `json:"total_distance"`
