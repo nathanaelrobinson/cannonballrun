@@ -18,6 +18,7 @@ data : {
     last_name : null,
     email : null,
     password : null,
+    new_username : null,
     new_password : null,
     confirm_new_password: null,
     loginResponse: null,

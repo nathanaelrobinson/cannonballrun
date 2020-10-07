@@ -269,7 +269,6 @@ func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
 	athlete.AccessToken = responseData.AccessToken
 	athlete.RefreshToken = responseData.RefreshToken
 	athlete.ExpiresAt = responseData.ExpiresAt
-	athlete.StravaID = responseData.Athlete.ID
 	athlete.UserName = responseData.Athlete.Username
 	athlete.ProfileImage = responseData.Athlete.Profile
 
@@ -277,14 +276,16 @@ func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
 	// create a new strava athlete and serve the landing page. Otherwise send the previous athlete
 	var previousAthlete StravaAthlete
 	if a.DB.Where("strava_id = ?", athlete.StravaID).First(&previousAthlete).RecordNotFound() {
-		a.DB.Save(&athlete)
+		a.DB.Create(&athlete)
 		tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
 		tmpl.Execute(w, athlete)
+		return
+	} else {
+		// var athlete StravaAthlete
+		tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
+		tmpl.Execute(w, previousAthlete)
+		return
 	}
-
-	// var athlete StravaAthlete
-	tmpl, _ := template.ParseFiles("./templates/strava_landing.html")
-	tmpl.Execute(w, previousAthlete)
 
 }
 
