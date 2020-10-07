@@ -42,6 +42,7 @@
   <nav class="navbar navbar-expand-lg" style="background-color:#31708E">
   <div class="container">
     <a class="navbar-brand" href="" style="color:#F7F9FB">The Cannonball Run</a>
+    <button data-toggle="modal" data-target="#newTeamModal" type="button" class="btn btn-secondary btn-sm" style="margin-left:20%">Create Team</button>
   </div>
   </nav>
 
@@ -58,6 +59,9 @@
       <tbody>
         <tr v-for="team in userTeams">
           <th @click="selectTeam(team)" scope="row" style="padding-left:10%">{{ team.name }}<span class="badge badge-pill badge-dark" style="margin-left:20px;">Active</span></th>
+        </tr>
+        <tr v-if="userTeams.length == 0">
+          <th @click="loadJoinableTeams()" scope="row" style="padding-left:10%">Join Team<span class="badge badge-pill badge-dark" style="margin-left:20px;">Active</span></th>
         </tr>
       </tbody>
     </table>
@@ -110,26 +114,76 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLongTitle">{{ detailTeam.name }}</h5>
+          <h5 class="modal-title w-100 font-weight-bold" id="exampleModalLongTitle">{{ detailTeam.name }}</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
           {{ detailTeam.description }}
-        </div>
-        <table class="table table-hover table-borderless">
-          <thead>
-            <tr>
-              <th scope="col">Runners</th>
-            </tr>
-          </thead>
-          <tbody>
-              <tr v-for="runner in detailRunners">
-                <th scope="row">{{ runner.username }} <span style="font-size:.8em">{{ (runner.total_distance/1609.34).toFixed(2) }} mi<a/></span></th>
+          <table class="table table-hover table-borderless">
+            <thead>
+              <tr>
+                <th scope="col">Leaders</th>
               </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+                <tr v-for="runner in detailRunners">
+                  <th scope="row">{{ runner.username }} <span style="font-size:.8em">{{ (runner.total_distance/1609.34).toFixed(2) }} mi<a/></span></th>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Join a Team Modal -->
+  <div class="modal fade" id="joinTeamModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title w-100 font-weight-bold" id="exampleModalLongTitle">Joinable Teams</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="overflow:scroll">
+          <div v-for="team in joinableTeams" class="card" style="width: 100%;margin-bottom:5px">
+            <div class="card-body">
+              <h5 class="card-title">{{ team.name }}</h5>
+              <p class="card-text">{{ team.description }}</p>
+              <span class="card-link">Runners: {{ team.Runners.length }}</span>
+              <button @click="joinTeam(team)" type="button" class="btn modal-submit-button" style="margin-left:20%">Join Team</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- New Team Modal   -->
+  <div class="modal fade" id="newTeamModal" tabindex="-1" aria-hidden="true" style="margin-top:100px">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header text-center">
+          <h4 class="modal-title w-100 font-weight-bold">Create a New Team</h4>
+        </div>
+
+        <div class="modal-body mx-2 form-group">
+
+          <div class="md-form mb-2">
+            <input class="form-control" v-model="new_teamname" placeholder="Team Name" required>
+          </div>
+
+          <div class="md-form mb-2">
+            <textarea class="form-control" rows="3" v-model="new_description" placeholder="Description of Team" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-center">
+          <button class="btn modal-submit-button" @click="createNewTeam()">Create</button>
+        </div>
       </div>
     </div>
   </div>

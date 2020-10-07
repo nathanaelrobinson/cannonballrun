@@ -103,6 +103,35 @@ type RunnerOutput struct {
 	TotalDistance   float64 `json:"total_distance"`
 }
 
+type JsonAuthAthlete struct {
+	ID            int    `json:"id"`
+	Username      string `json:"username"`
+	ResourceState int    `json:"resource_state"`
+	Firstname     string `json:"firstname"`
+	Lastname      string `json:"lastname"`
+	City          string `json:"city"`
+	State         string `json:"state"`
+	Country       string `json:"country"`
+	Sex           string `json:"sex"`
+	Premium       bool   `json:"premium"`
+	Summit        bool   `json:"summit"`
+	CreatedAt     string `json:"created_at"`
+	UpdatedAt     string `json:"updated_at"`
+	BadgeTypeId   int    `json:"badge_type_id"`
+	ProfileMedium string `json:"profile_medium"`
+	Profile       string `json:"profile"`
+	Friend        bool   `json:"friend"`
+	Follower      bool   `json:"follower"`
+}
+type JsonAuthReponse struct {
+	TokenType    string          `json:"token_type"`
+	ExpiresAt    int             `json:"expires_at"`
+	ExpiresIn    int             `json:"expires_in"`
+	RefreshToken string          `json:"refresh_token"`
+	AccessToken  string          `json:"access_token"`
+	Athlete      JsonAuthAthlete `json:"athlete"`
+}
+
 // type RaceEvent struct {
 // 	Name        string    `json:"user_id"`
 // 	Active      bool      `json:"active"`

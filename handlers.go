@@ -46,10 +46,10 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(&team)
 		return
 	case r.Method == "POST":
+		OwnerID := r.Context().Value("user_id")
 		team.Name = r.FormValue("name")
 		team.Description = r.FormValue("description")
-		ownerID, _ := strconv.ParseUint(r.FormValue("owner_id"), 10, 64)
-		team.UserID = uint(ownerID)
+		team.UserID = OwnerID.(uint)
 		a.DB.Create(&team)
 		a.DB.Create(&Affiliation{TeamID: team.ID, UserID: team.UserID, Status: "Active"})
 		w.WriteHeader(http.StatusCreated)
@@ -71,7 +71,7 @@ func (a *App) TeamHandlerDetail(w http.ResponseWriter, r *http.Request) {
 func (a *App) TeamAthletes(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var runners []RunnerOutput
-	a.DB.Table("workouts").Select("users.id as user_id, users.username, count(distinct workouts.id) as activities_count, sum(workouts.distance) as total_distance").Joins("left join users on users.id = workouts.user_id").Joins("left join affiliations on affiliations.user_id = users.id").Group("users.id, users.username").Where("workouts.type = 'Run' and affiliations.team_id = ?", vars["id"]).Order("sum(workouts.distance) desc").Scan(&runners)
+	a.DB.Table("workouts").Select("users.id as user_id, users.username, count(distinct workouts.id) as activities_count, sum(workouts.distance) as total_distance").Joins("left join users on users.id = workouts.user_id").Joins("left join affiliations on affiliations.user_id = users.id").Group("users.id, users.username").Where("affiliations.status = 'Active' and workouts.type = 'Run' and affiliations.team_id = ?", vars["id"]).Order("sum(workouts.distance) desc").Scan(&runners)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(&runners)
 	return
@@ -233,13 +233,15 @@ func (a *App) UserHandlerDetail(w http.ResponseWriter, r *http.Request) {
 // TeamHandlerList provides a list view of Teams
 func (a *App) TeamsStatus(w http.ResponseWriter, r *http.Request) {
 	var teams []TeamOutput
-	a.DB.Table("workouts").Select("teams.id as team_id, teams.name, teams.description, sum(workouts.distance) as distance").Joins("left join affiliations on affiliations.user_id = workouts.user_id").Joins("left join teams on teams.id = affiliations.team_id").Group("teams.id, teams.name, teams.description").Where("workouts.type = ? and teams.id is not null", "Run").Order("sum(workouts.distance) desc").Scan(&teams)
+	a.DB.Table("workouts").Select("teams.id as team_id, teams.name, teams.description, sum(workouts.distance) as distance").Joins("left join affiliations on affiliations.user_id = workouts.user_id").Joins("left join teams on teams.id = affiliations.team_id").Group("teams.id, teams.name, teams.description").Where("affiliations.status = 'Active' and workouts.type = ? and teams.id is not null", "Run").Order("sum(workouts.distance) desc").Scan(&teams)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(&teams)
 }
 
 // StravaAuthorization is an endpoint that handles Strava URI direct for OAuth Authorization
 func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
+
+	// Retreive GET params from Strava URI URL and prepare post payload
 	code := string(r.URL.Query()["code"][0])
 	baseURL, _ := url.Parse("https://www.strava.com/")
 	baseURL.Path = "api/v3/oauth/token"
@@ -249,26 +251,30 @@ func (a *App) StravaAuthorization(w http.ResponseWriter, r *http.Request) {
 	params.Add("client_secret", string(os.Getenv("STRAVA_CLIENT_SECRET")))
 	params.Add("grant_type", "authorization_code")
 	baseURL.RawQuery = params.Encode()
-	fmt.Printf(baseURL.String())
-	// var athlete StravaAthlete
 
+	// Post Auth Code and accompanying payload info to Strava API to retreive Refresh Token and Access Token
 	resp, err := http.Post(baseURL.String(), "application/json", nil)
 	checkInternalServerError(err, w)
 	body, err := ioutil.ReadAll(resp.Body)
 	checkInternalServerError(err, w)
 
-	responseData := make(map[string]interface{})
+	// Unmarshall Json
+	var responseData JsonAuthReponse
 	json.Unmarshal(body, &responseData)
-	innerAthlete := responseData["athlete"].(map[string]interface{})
+	fmt.Printf("%+v\n", responseData)
 
+	// Apply JSON to StravaAthlete object
 	var athlete StravaAthlete
-	athlete.AccessToken = responseData["access_token"].(string)
-	athlete.RefreshToken = responseData["refresh_token"].(string)
-	athlete.ExpiresAt = int(responseData["expires_at"].(float64))
-	athlete.StravaID = int(innerAthlete["id"].(float64))
-	athlete.UserName = innerAthlete["username"].(string)
-	athlete.ProfileImage = innerAthlete["profile"].(string)
+	athlete.StravaID = responseData.Athlete.ID
+	athlete.AccessToken = responseData.AccessToken
+	athlete.RefreshToken = responseData.RefreshToken
+	athlete.ExpiresAt = responseData.ExpiresAt
+	athlete.StravaID = responseData.Athlete.ID
+	athlete.UserName = responseData.Athlete.Username
+	athlete.ProfileImage = responseData.Athlete.Profile
 
+	// Create an object to determine if there is already a strava athlete by this ID. If there is not,
+	// create a new strava athlete and serve the landing page. Otherwise send the previous athlete
 	var previousAthlete StravaAthlete
 	if a.DB.Where("strava_id = ?", athlete.StravaID).First(&previousAthlete).RecordNotFound() {
 		a.DB.Save(&athlete)

@@ -10,6 +10,7 @@ require (
 	github.com/alecthomas/gocyclo v0.0.0-20150208221726-aa8f8b160214 // indirect
 	github.com/alexkohler/nakedret v1.0.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang/gddo v0.0.0-20200831202555-721e228c7686
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20200309095847-7953dde2c7bf // indirect
 	github.com/gorilla/handlers v1.4.2
